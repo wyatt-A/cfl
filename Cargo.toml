@@ -1,0 +1,19 @@
+[package]
+name = "cfl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+memmap = "0.7.0"
+ndarray = {version = "0.15.6", features = ["rayon"] }
+num-complex = "0.4.6"
+regex = "1.10.3"
+
+[dev-dependencies]
+num-traits = "0.2.19"
+rand = "0.8.5"
+
+[profile.test]
+opt-level = 3
