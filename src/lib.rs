@@ -22,7 +22,7 @@ use std::path::PathBuf;
 
 pub use num_complex;
 pub use ndarray;
-pub use ndarray_stats;
+pub use ndarray_stats::QuantileExt;
 
 #[derive(Debug)]
 pub enum CflError {
