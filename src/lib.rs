@@ -33,6 +33,7 @@ pub enum CflError {
     InvalidMemOrder,
     CflNotFound(PathBuf),
     HdrNotFound(PathBuf),
+    MmapFlush
 }
 
 pub struct CflReader {
@@ -219,6 +220,10 @@ impl CflWriter {
         }
 
         Ok(())
+    }
+
+    pub fn flush(&self) -> Result<(),CflError> {
+        self.mmap.flush().map_err(|_|CflError::MmapFlush)
     }
 
 }
