@@ -253,6 +253,7 @@ impl CflWriter {
         src.iter().zip(dst_indices.iter()).for_each(|(value,dst_idx)|{
             self.write_op(*dst_idx,*value,&op).unwrap()
         });
+        println!("flushing mmap ...");
         self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
         Ok(())
     }
@@ -261,8 +262,6 @@ impl CflWriter {
     where F: Fn(Complex32,Complex32) -> Complex32 {
         let mut s = [Complex32::ZERO];
         self.write_op_slice(idx, &[value], &mut s, op)?;
-        println!("flushing mmap ...");
-        self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
         Ok(())
     }
 
