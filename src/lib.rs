@@ -14,11 +14,14 @@ use std::fmt;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
+use std::io::BufWriter;
 use std::io::Read;
+use std::io::Seek;
 use std::io::Write;
 use std::mem::size_of;
 use std::path::Path;
 use std::path::PathBuf;
+use std::slice;
 
 pub use num_complex;
 pub use ndarray;
@@ -33,7 +36,9 @@ pub enum CflError {
     InvalidMemOrder,
     CflNotFound(PathBuf),
     HdrNotFound(PathBuf),
-    MmapFlush
+    MmapFlush,
+    BufWriter,
+    BufWriterFlush,
 }
 
 pub struct CflReader {
@@ -90,6 +95,77 @@ impl CflReader {
     }
 
 }
+
+// pub struct CflBufWriter {
+//     writer: BufWriter<File>,
+//     n_elements:usize,
+// }
+
+// impl CflBufWriter {
+//     pub fn new(cfl_base:impl AsRef<Path>, dimensions:&[usize]) -> Result<Self,CflError> {
+//         let f = OpenOptions::new()
+//         .read(true)
+//         .write(true)
+//         .create(true)
+//         .truncate(true)
+//         .open(cfl_base.as_ref().with_extension("cfl"))
+//         .unwrap();
+
+//         let n_elements = dimensions.iter().product::<usize>();
+//         f.set_len(
+//             (n_elements * size_of::<Complex32>()) as u64
+//         ).map_err(|e|CflError::IO(e))?;
+        
+//         write_header(cfl_base, dimensions)?;
+
+//         let writer = BufWriter::new(f);
+
+//         Ok(Self {
+//             writer,
+//             n_elements,
+//         })
+//     }
+
+//     pub fn open(cfl_base:impl AsRef<Path>) -> Result<Self,CflError> {
+//         let dimensions = get_dims(&cfl_base)?;
+//         let f = OpenOptions::new()
+//         .read(true)
+//         .write(true)
+//         .open(cfl_base.as_ref().with_extension("cfl"))
+//         .unwrap();
+//         let n_elements = dimensions.iter().product::<usize>();
+
+//         let writer = BufWriter::new(f);
+//         Ok(Self {
+//             writer,
+//             n_elements,
+//         })
+//     }
+
+//     pub fn write_slice(&mut self,dest_idx:usize,src:&[Complex32]) -> Result<(),CflError> {
+//         if dest_idx + src.len() > self.n_elements {
+//             Err(CflError::Mmap)?
+//         }
+//         let start = dest_idx*size_of::<Complex32>();
+//         self.writer.seek(io::SeekFrom::Start(start as u64)).unwrap();
+//         let ptr = src.as_ptr() as *const u8;
+//         // Calculate the byte length of the slice
+//         let len = src.len() * size_of::<Complex32>();
+//         // Create a byte slice from the raw pointer and length
+//         let byte_slice = unsafe { slice::from_raw_parts(ptr, len) };
+//         self.writer.write_all(byte_slice).map_err(|_|CflError::BufWriter)?;
+//         self.writer.flush().map_err(|_|CflError::BufWriterFlush)?;
+//         Ok(())
+//     }
+
+//     pub fn write(&mut self,idx:usize,value:Complex32) -> Result<(),CflError> {
+//         self.write_slice(idx, &[value])?;
+//         Ok(())
+//     }
+
+// }
+
+
 
 pub struct CflWriter {
     mmap:MmapMut,
@@ -220,6 +296,8 @@ impl CflWriter {
                 src.len() * size_of::<Complex32>(),
             );
         }
+
+        self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
 
         Ok(())
     }
