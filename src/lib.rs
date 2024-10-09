@@ -178,7 +178,6 @@ impl CflWriter {
             self.write_op(*dst_idx,*value,&op).unwrap()
         });
         self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
-        err
         Ok(())
     }
 
