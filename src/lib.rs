@@ -250,10 +250,22 @@ impl CflWriter {
 
     pub fn write_op_from<F>(&mut self,dst_indices:&[usize],src:&[Complex32],op:F) -> Result<(),CflError>
     where F: Fn(Complex32,Complex32) -> Complex32 {
+        let mut min_idx = usize::MAX;
+        let mut max_idx = 0;
         src.iter().zip(dst_indices.iter()).for_each(|(value,dst_idx)|{
+
+            if *dst_idx < min_idx {min_idx = *dst_idx}
+            if *dst_idx > max_idx {max_idx = *dst_idx}
+
             self.write_op(*dst_idx,*value,&op).unwrap()
         });
-        self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
+
+        let min_addr = min_idx * size_of::<Complex32>();
+        let max_addr = max_idx * size_of::<Complex32>();
+
+        self.mmap.flush_range(min_addr,max_addr - min_addr).map_err(|_|CflError::MmapFlush)?;
+
+        //self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
         Ok(())
     }
 
