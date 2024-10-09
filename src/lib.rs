@@ -7,6 +7,7 @@ use ndarray::parallel::prelude::IntoParallelRefMutIterator;
 use ndarray::parallel::prelude::ParallelIterator;
 use ndarray::ArrayD;
 use ndarray::ShapeBuilder;
+use num_complex::Complex;
 use num_complex::Complex32;
 use regex::Regex;
 use std::error::Error;
@@ -19,6 +20,7 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::Write;
 use std::mem::size_of;
+use std::os::unix::fs::FileExt;
 use std::path::Path;
 use std::path::PathBuf;
 use std::slice;
@@ -39,6 +41,7 @@ pub enum CflError {
     MmapFlush,
     BufWriter,
     BufWriterFlush,
+    IoResult(io::Result<()>),
 }
 
 pub struct CflReader {
@@ -96,74 +99,87 @@ impl CflReader {
 
 }
 
-// pub struct CflBufWriter {
-//     writer: BufWriter<File>,
-//     n_elements:usize,
-// }
+pub struct CflBufWriter {
+    file: File,
+    n_elements:usize,
+}
 
-// impl CflBufWriter {
-//     pub fn new(cfl_base:impl AsRef<Path>, dimensions:&[usize]) -> Result<Self,CflError> {
-//         let f = OpenOptions::new()
-//         .read(true)
-//         .write(true)
-//         .create(true)
-//         .truncate(true)
-//         .open(cfl_base.as_ref().with_extension("cfl"))
-//         .unwrap();
+impl CflBufWriter {
+    pub fn new(cfl_base:impl AsRef<Path>, dimensions:&[usize]) -> Result<Self,CflError> {
+        let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(cfl_base.as_ref().with_extension("cfl"))
+        .unwrap();
 
-//         let n_elements = dimensions.iter().product::<usize>();
-//         f.set_len(
-//             (n_elements * size_of::<Complex32>()) as u64
-//         ).map_err(|e|CflError::IO(e))?;
+        let n_elements = dimensions.iter().product::<usize>();
+        file.set_len(
+            (n_elements * size_of::<Complex32>()) as u64
+        ).map_err(|e|CflError::IO(e))?;
         
-//         write_header(cfl_base, dimensions)?;
+        write_header(cfl_base, dimensions)?;
 
-//         let writer = BufWriter::new(f);
+        Ok(Self {
+            file,
+            n_elements,
+        })
+    }
 
-//         Ok(Self {
-//             writer,
-//             n_elements,
-//         })
-//     }
+    pub fn open(cfl_base:impl AsRef<Path>) -> Result<Self,CflError> {
+        let dimensions = get_dims(&cfl_base)?;
+        let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(cfl_base.as_ref().with_extension("cfl"))
+        .unwrap();
+        let n_elements = dimensions.iter().product::<usize>();
 
-//     pub fn open(cfl_base:impl AsRef<Path>) -> Result<Self,CflError> {
-//         let dimensions = get_dims(&cfl_base)?;
-//         let f = OpenOptions::new()
-//         .read(true)
-//         .write(true)
-//         .open(cfl_base.as_ref().with_extension("cfl"))
-//         .unwrap();
-//         let n_elements = dimensions.iter().product::<usize>();
+        Ok(Self {
+            file,
+            n_elements,
+        })
+    }
 
-//         let writer = BufWriter::new(f);
-//         Ok(Self {
-//             writer,
-//             n_elements,
-//         })
-//     }
+    pub fn write_slice(&mut self,dest_idx:usize,src:&[Complex32]) -> Result<(),CflError> {
+        if dest_idx + src.len() > self.n_elements {
+            Err(CflError::Mmap)?
+        }
+        let start = dest_idx*size_of::<Complex32>();
+        self.file.seek(io::SeekFrom::Start(start as u64)).unwrap();
+        let ptr = src.as_ptr() as *const u8;
+        // Calculate the byte length of the slice
+        let len = src.len() * size_of::<Complex32>();
+        // Create a byte slice from the raw pointer and length
+        let byte_slice = unsafe { slice::from_raw_parts(ptr, len) };
+        self.file.write_all(byte_slice).map_err(|_|CflError::BufWriter)?;
+        Ok(())
+    }
 
-//     pub fn write_slice(&mut self,dest_idx:usize,src:&[Complex32]) -> Result<(),CflError> {
-//         if dest_idx + src.len() > self.n_elements {
-//             Err(CflError::Mmap)?
-//         }
-//         let start = dest_idx*size_of::<Complex32>();
-//         self.writer.seek(io::SeekFrom::Start(start as u64)).unwrap();
-//         let ptr = src.as_ptr() as *const u8;
-//         // Calculate the byte length of the slice
-//         let len = src.len() * size_of::<Complex32>();
-//         // Create a byte slice from the raw pointer and length
-//         let byte_slice = unsafe { slice::from_raw_parts(ptr, len) };
-//         self.writer.write_all(byte_slice).map_err(|_|CflError::BufWriter)?;
-//         self.writer.flush().map_err(|_|CflError::BufWriterFlush)?;
-//         Ok(())
-//     }
+    pub fn write_op<F>(&mut self,idx:usize,value:Complex32,op:F) -> Result<(),CflError> 
+    where F: Fn(Complex32,Complex32) -> Complex32 {
+        let start = idx * size_of::<Complex32>();
+        let mut tmp = [Complex32::ZERO];
+        let ptr = tmp.as_mut_ptr() as *mut u8;
+        let byte_slice = unsafe { slice::from_raw_parts_mut(ptr, size_of::<Complex32>()) };
+        self.file.read_exact_at(byte_slice, start as u64).map_err(|e|CflError::IO(e))?;
+        let out = [op(tmp[0],value)];
+        let ptr = out.as_ptr() as *const u8;
+        let byte_slice = unsafe { slice::from_raw_parts(ptr, size_of::<Complex32>()) };
+        self.file.write_at(byte_slice, start as u64).map_err(|e|CflError::IO(e))?;
+        Ok(())
+    }
 
-//     pub fn write(&mut self,idx:usize,value:Complex32) -> Result<(),CflError> {
-//         self.write_slice(idx, &[value])?;
-//         Ok(())
-//     }
+    pub fn write_op_from<F>(&mut self,dst_indices:&[usize],src:&[Complex32],op:F) -> Result<(),CflError>
+    where F: Fn(Complex32,Complex32) -> Complex32 {
+        src.iter().zip(dst_indices.iter()).for_each(|(value,dst_idx)|{
+            self.write_op(*dst_idx,*value,&op).unwrap()
+        });
+        Ok(())
+    }
 
-// }
+}
 
 
 
