@@ -253,7 +253,6 @@ impl CflWriter {
         src.iter().zip(dst_indices.iter()).for_each(|(value,dst_idx)|{
             self.write_op(*dst_idx,*value,&op).unwrap()
         });
-        println!("flushing mmap ...");
         self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
         Ok(())
     }
