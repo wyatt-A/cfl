@@ -7,7 +7,6 @@ use ndarray::parallel::prelude::IntoParallelRefMutIterator;
 use ndarray::parallel::prelude::ParallelIterator;
 use ndarray::ArrayD;
 use ndarray::ShapeBuilder;
-use num_complex::Complex;
 use num_complex::Complex32;
 use regex::Regex;
 use std::error::Error;
@@ -15,7 +14,6 @@ use std::fmt;
 use std::fs::File;
 use std::fs::OpenOptions;
 use std::io;
-use std::io::BufWriter;
 use std::io::Read;
 use std::io::Seek;
 use std::io::Write;
@@ -23,11 +21,12 @@ use std::mem::size_of;
 use std::os::unix::fs::FileExt;
 use std::path::Path;
 use std::path::PathBuf;
-use std::slice;
 
 pub use num_complex;
 pub use ndarray;
 pub use ndarray_stats;
+#[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib"))]
+pub use ndarray_linalg;
 
 #[derive(Debug)]
 pub enum CflError {
