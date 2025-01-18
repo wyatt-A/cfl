@@ -25,7 +25,7 @@ use std::path::PathBuf;
 pub use num_complex;
 pub use ndarray;
 pub use ndarray_stats;
-#[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib"))]
+#[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib", feature = "linalg-mkl"))]
 pub use ndarray_linalg;
 
 #[derive(Debug)]
