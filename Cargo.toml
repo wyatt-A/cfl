@@ -44,3 +44,8 @@ linalg-mkl = [
     "ndarray-linalg",
     "ndarray-linalg/intel-mkl-system"
 ]
+
+linalg-mkl-static = [
+    "ndarray-linalg",
+    "ndarray-linalg/intel-mkl-static"
+]
