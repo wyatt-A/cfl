@@ -18,7 +18,7 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::Write;
 use std::mem::size_of;
-use std::os::unix::fs::FileExt;
+//use std::os::unix::fs::FileExt;
 use std::path::Path;
 use std::path::PathBuf;
 

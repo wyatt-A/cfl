@@ -39,3 +39,8 @@ linalg-netlib = [
     "ndarray-linalg",
     "ndarray-linalg/netlib-system"
 ]
+
+linalg-mkl = [
+    "ndarray-linalg",
+    "ndarray-linalg/intel-mkl-system"
+]
