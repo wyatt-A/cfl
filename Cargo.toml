@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 memmap = "0.7.0"
-ndarray = {version = "0.15.6", features = ["rayon"] }
+ndarray = {version = "0.15.6", features = ["rayon","approx"] }
 ndarray-stats = "0.5.1"
 num-complex = "0.4.6"
 regex = "1.10.3"
