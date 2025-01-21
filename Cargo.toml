@@ -35,6 +35,11 @@ linalg-openblas = [
     "ndarray-linalg/openblas-system"
 ]
 
+linalg-openblas-static = [
+    "ndarray-linalg",
+    "ndarray-linalg/openblas-static"
+]
+
 linalg-netlib = [
     "ndarray-linalg",
     "ndarray-linalg/netlib-system"
