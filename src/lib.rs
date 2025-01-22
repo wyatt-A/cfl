@@ -7,7 +7,7 @@ use ndarray::parallel::prelude::IntoParallelRefMutIterator;
 use ndarray::parallel::prelude::ParallelIterator;
 use ndarray::ArrayD;
 use ndarray::ShapeBuilder;
-use num_complex::Complex32;
+use num_complex::{Complex32, ComplexFloat};
 use regex::Regex;
 use std::error::Error;
 use std::fmt;
@@ -27,6 +27,9 @@ pub use ndarray;
 pub use ndarray_stats;
 #[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib", feature = "linalg-mkl", feature = "linalg-mkl-static", feature = "linalg-openblas-static"))]
 pub use ndarray_linalg;
+
+#[cfg(feature = "nifti-dump")]
+use nifti::writer::WriterOptions;
 
 #[derive(Debug)]
 pub enum CflError {
@@ -367,6 +370,35 @@ pub fn exists<T: AsRef<Path>>(filename: T) -> Result<(), CflError> {
     }
     Ok(())
 }
+
+#[cfg(feature = "nifti-dump")]
+pub fn dump_magnitude(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
+    let mag_vol = x.map(|x| x.abs());
+    let nii = WriterOptions::new(nifti_base);
+    nii.write_nifti(&mag_vol).expect("trouble writing to nifti");
+}
+
+#[cfg(feature = "nifti-dump")]
+pub fn dump_phase(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
+    let phase = x.map(|x| x.to_polar().1);
+    let nii = WriterOptions::new(nifti_base);
+    nii.write_nifti(&phase).expect("trouble writing to nifti");
+}
+
+#[cfg(feature = "nifti-dump")]
+pub fn dump_real(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
+    let re = x.map(|x| x.re);
+    let nii = WriterOptions::new(nifti_base);
+    nii.write_nifti(&re).expect("trouble writing to nifti");
+}
+
+#[cfg(feature = "nifti-dump")]
+pub fn dump_imaginary(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
+    let im = x.map(|x| x.im);
+    let nii = WriterOptions::new(nifti_base);
+    nii.write_nifti(&im).expect("trouble writing to nifti");
+}
+
 
 #[cfg(test)]
 mod tests {

@@ -11,6 +11,7 @@ ndarray = {version = "0.15.6", features = ["rayon","approx"] }
 ndarray-stats = "0.5.1"
 num-complex = "0.4.6"
 regex = "1.10.3"
+nifti = { version = "0.16.0", optional = true }
 
 [dependencies.ndarray-linalg]
 version = "0.16"
@@ -28,6 +29,11 @@ opt-level = 3
 [features]
 # By default, no features are enabled: no linalg, minimal dependencies.
 default = []
+
+# adds ability to write cfl as a nifti for easy viewing
+nifti-dump = [
+    "nifti"
+]
 
 # Each of these features turns on ndarray-linalg plus a specific backend.
 linalg-openblas = [
@@ -54,3 +60,4 @@ linalg-mkl-static = [
     "ndarray-linalg",
     "ndarray-linalg/intel-mkl-static"
 ]
+nifti = ["dep:nifti"]
