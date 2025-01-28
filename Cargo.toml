@@ -10,6 +10,7 @@ memmap = "0.7.0"
 ndarray = {version = "0.15.6", features = ["rayon","approx"] }
 ndarray-stats = "0.5.1"
 num-complex = "0.4.6"
+num-traits = "0.2.19"
 regex = "1.10.3"
 nifti = { version = "0.16.0", optional = true }
 
@@ -20,7 +21,6 @@ default-features = false
 features = []
 
 [dev-dependencies]
-num-traits = "0.2.19"
 rand = "0.8.5"
 
 [profile.test]
