@@ -372,6 +372,13 @@ pub fn exists<T: AsRef<Path>>(filename: T) -> Result<(), CflError> {
     Ok(())
 }
 
+
+#[cfg(feature = "nifti-dump")]
+pub fn dump(nifti_base:impl AsRef<Path>, x:&ArrayD<f32>) {
+    let nii = WriterOptions::new(nifti_base);
+    nii.write_nifti(&x).expect("trouble writing to nifti");
+}
+
 #[cfg(feature = "nifti-dump")]
 pub fn dump_magnitude(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
     let mag_vol = x.map(|x| x.abs());
