@@ -408,7 +408,7 @@ pub fn dump_imaginary(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
 }
 
 #[cfg(feature = "nifti-dump")]
-pub fn read_nifti_to_cfl(real_part:impl AsRef<Path>,imaginary_part:Option<impl AsRef<Path>>) -> ArrayD<Complex32> {
+pub fn read_nifti_to_cfl<T:AsRef<Path>>(real_part:T,imaginary_part:Option<T>) -> ArrayD<Complex32> {
 
     let nii = ReaderOptions::new();
     let vol_real = nii.read_file(real_part).expect("trouble reading from nifti");
