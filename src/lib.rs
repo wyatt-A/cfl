@@ -5,7 +5,7 @@ use ndarray::parallel::prelude::IndexedParallelIterator;
 use ndarray::parallel::prelude::IntoParallelRefIterator;
 use ndarray::parallel::prelude::IntoParallelRefMutIterator;
 use ndarray::parallel::prelude::ParallelIterator;
-use ndarray::ArrayD;
+use ndarray::{par_azip, ArrayD};
 use ndarray::ShapeBuilder;
 use num_complex::{Complex32, ComplexFloat};
 use regex::Regex;
@@ -28,7 +28,7 @@ pub use ndarray_stats;
 pub use num_traits;
 #[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib", feature = "linalg-mkl", feature = "linalg-mkl-static", feature = "linalg-openblas-static"))]
 pub use ndarray_linalg;
-
+use nifti::{IntoNdArray, NiftiObject, ReaderOptions};
 #[cfg(feature = "nifti-dump")]
 use nifti::writer::WriterOptions;
 
@@ -405,6 +405,28 @@ pub fn dump_imaginary(nifti_base:impl AsRef<Path>, x:&ArrayD<Complex32>) {
     let im = x.map(|x| x.im);
     let nii = WriterOptions::new(nifti_base);
     nii.write_nifti(&im).expect("trouble writing to nifti");
+}
+
+#[cfg(feature = "nifti-dump")]
+pub fn read_nifti_to_cfl(real_part:impl AsRef<Path>,imaginary_part:Option<impl AsRef<Path>>) -> ArrayD<Complex32> {
+
+    let nii = ReaderOptions::new();
+    let vol_real = nii.read_file(real_part).expect("trouble reading from nifti");
+    let _r:ArrayD<f32> = vol_real.into_volume().into_ndarray().expect("failed to convert to array");
+
+    let mut r = ArrayD::zeros(_r.shape().f());
+    r.assign(&_r);
+    let mut r = r.map(|&x|Complex32::new(x,0.0));
+
+    if let Some(imaginary) = imaginary_part {
+        let vol_imag = nii.read_file(imaginary).expect("trouble reading from nifti");
+        let _i:ArrayD<f32> = vol_imag.into_volume().into_ndarray().expect("failed to convert to array");
+        let mut i = ArrayD::zeros(_i.shape().f());
+        i.assign(&_i);
+        assert_eq!(r.dim(), i.dim(),"real and imaginary parts must have the same dimensions");
+        par_azip!(&mut r).and(&i).for_each(|a,&b| a.im = b);
+    }
+    r
 }
 
 
