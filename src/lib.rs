@@ -358,6 +358,24 @@ pub fn read_to_buffer<T: AsRef<Path>>(file_path:T,buffer:&mut [Complex32]) -> Re
     Ok(())
 }
 
+pub fn write_buffer<T: AsRef<Path>>(file_path:T,dims:&[usize],buffer:&[Complex32]) -> Result<(), CflError> {
+
+    let n_samples:usize = dims.iter().product();
+    assert_eq!(n_samples, buffer.len(),"unexpected buffer size");
+
+    let f = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(true)
+        .open(file_path.as_ref().with_extension("cfl"))
+        .unwrap();
+
+    unmap_buff_to_cfl(&f, buffer).map_err(|err| CflError::IO(err))?;
+    write_header(file_path, dims)?;
+
+    Ok(())
+}
 
 
 pub fn from_array<T: AsRef<Path>>(file_path: T, x: &ArrayD<Complex32>) -> Result<(), CflError> {
