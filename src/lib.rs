@@ -45,6 +45,7 @@ pub enum CflError {
     BufWriter,
     BufWriterFlush,
     IoResult(io::Result<()>),
+    BufferSize{expected: usize, actual: usize},
 }
 
 pub struct CflReader {
@@ -341,6 +342,23 @@ pub fn to_array<T: AsRef<Path>>(
         .map_err(|err| CflError::IO(err))?;
     Ok(buff)
 }
+
+pub fn read_to_buffer<T: AsRef<Path>>(file_path:T,buffer:&mut [Complex32]) -> Result<(),CflError> {
+
+    let dims = get_dims(&file_path)?;
+    let n_samples = dims.iter().product();
+
+    if buffer.len() != n_samples {
+        return Err(CflError::BufferSize {expected:n_samples,actual:buffer.len()});
+    }
+
+    let file =
+        File::open(file_path.as_ref().with_extension("cfl")).map_err(|err| CflError::IO(err))?;
+    memmap_cfl_to_buff(&file, buffer).map_err(|err| CflError::IO(err))?;
+    Ok(())
+}
+
+
 
 pub fn from_array<T: AsRef<Path>>(file_path: T, x: &ArrayD<Complex32>) -> Result<(), CflError> {
     let f = OpenOptions::new()
