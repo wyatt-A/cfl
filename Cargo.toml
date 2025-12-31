@@ -62,3 +62,11 @@ linalg-mkl-static = [
     "ndarray-linalg/intel-mkl-static"
 ]
 nifti = ["dep:nifti"]
+
+[[bin]]
+name = "cfl-to-nifti"
+required-features = ["nifti-dump"]
+
+[[bin]]
+name = "nifti-to-cfl"
+required-features = ["nifti-dump"]
