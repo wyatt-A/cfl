@@ -1,5 +1,6 @@
 use std::path::{Path, PathBuf};
 use clap::Parser;
+#[cfg(feature = "nifti-dump")]
 use cfl::{dump_magnitude, dump_phase, dump_real, dump_imaginary, read_nifti_to_cfl};
 
 #[derive(clap::Parser,Debug)]

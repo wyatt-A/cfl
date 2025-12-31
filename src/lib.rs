@@ -18,7 +18,6 @@ use std::io::Read;
 use std::io::Seek;
 use std::io::Write;
 use std::mem::size_of;
-//use std::os::unix::fs::FileExt;
 use std::path::Path;
 use std::path::PathBuf;
 
@@ -26,11 +25,15 @@ pub use num_complex;
 pub use ndarray;
 pub use ndarray_stats;
 pub use num_traits;
+
 #[cfg(any(feature = "linalg-openblas", feature = "linalg-netlib", feature = "linalg-mkl", feature = "linalg-mkl-static", feature = "linalg-openblas-static"))]
 pub use ndarray_linalg;
-use nifti::{IntoNdArray, NiftiObject, ReaderOptions};
+
 #[cfg(feature = "nifti-dump")]
 use nifti::writer::WriterOptions;
+
+#[cfg(feature = "nifti-dump")]
+use nifti::{IntoNdArray, NiftiObject, ReaderOptions};
 
 #[derive(Debug)]
 pub enum CflError {
