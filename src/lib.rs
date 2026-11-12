@@ -274,7 +274,7 @@ pub fn get_dims<T: AsRef<Path>>(file_path: T) -> Result<Vec<usize>, CflError> {
 }
 
 /// write cfl header with dimensions
-fn write_header<T: AsRef<Path>>(file_path: T, dims: &[usize]) -> Result<(), CflError> {
+pub fn write_header<T: AsRef<Path>>(file_path: T, dims: &[usize]) -> Result<(), CflError> {
     if dims.len() > 16 {
         Err(CflError::TooManyDims(dims.len()))?
     }
