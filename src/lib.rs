@@ -47,6 +47,7 @@ pub enum CflError {
     MmapFlush,
     BufWriter,
     BufWriterFlush,
+    FileSync,
     IoResult(io::Result<()>),
     BufferSize{expected: usize, actual: usize},
 }
@@ -107,6 +108,7 @@ impl CflReader {
 }
 
 pub struct CflWriter {
+    file:File,
     mmap:MmapMut,
     //dimensions:Vec<usize>,
     n_elements:usize,
@@ -135,6 +137,7 @@ impl CflWriter {
 
         Ok(Self {
             mmap,
+            file:f,
             //dimensions: dimensions.to_owned(),
             n_elements,
         })
@@ -153,6 +156,7 @@ impl CflWriter {
             MmapMut::map_mut(&f).map_err(|_|CflError::Mmap)?
         };
         Ok(Self {
+            file: f,
             mmap,
             //dimensions: dimensions.to_owned(),
             n_elements,
@@ -238,7 +242,8 @@ impl CflWriter {
     }
 
     pub fn flush(&self) -> Result<(),CflError> {
-        self.mmap.flush().map_err(|_|CflError::MmapFlush)
+        self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
+        self.file.sync_all().map_err(|_|CflError::FileSync)
     }
 
 }
