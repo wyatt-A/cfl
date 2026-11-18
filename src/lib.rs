@@ -247,7 +247,7 @@ impl CflWriter {
         match self.file.sync_all() {
             Ok(()) => Ok(()),
             Err(e) => {
-                println!("failed to syn_all() {}",e);
+                //println!("failed to syn_all() {}",e);
                 Ok(())
             }
         }
