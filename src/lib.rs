@@ -243,7 +243,15 @@ impl CflWriter {
 
     pub fn flush(&self) -> Result<(),CflError> {
         self.mmap.flush().map_err(|_|CflError::MmapFlush)?;
-        self.file.sync_all().map_err(|_|CflError::FileSync)
+
+        match self.file.sync_all() {
+            Ok(()) => Ok(()),
+            Err(e) => {
+                println!("failed to syn_all() {}",e);
+                Ok(())
+            }
+        }
+
     }
 
 }
